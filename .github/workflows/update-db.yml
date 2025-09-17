@@ -1,5 +1,8 @@
 name: Update Quotes DB
 
+permissions:
+  contents: write  # permite push no repositório
+
 on:
   schedule:
     - cron: "*/30 * * * *"  # a cada 30 minutos
