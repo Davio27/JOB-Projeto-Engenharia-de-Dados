@@ -4,7 +4,7 @@ import os
 import time
 from datetime import datetime, timedelta
 
-API_TOKEN = 'ca6998cd86aa06fb500ff1d4814aa1d838dc30f231d6f9d1390982821e1e0029'  # Option 1: Hardcode (less secure, use for testing)
+API_TOKEN = os.get(`API_TOKEN`)  # Option 1: Hardcode (less secure, use for testing)
 
 
 # Definir o caminho para o banco de dados
@@ -108,4 +108,5 @@ if __name__ == '__main__':
     while True:
         update_current_rates()
         print("Aguardando 25 minutos para próxima atualização...")
+
         time.sleep(1500)  # 25 min
