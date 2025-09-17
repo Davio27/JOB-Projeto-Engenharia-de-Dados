@@ -7,7 +7,7 @@ API_TOKEN = os.getenv("API_TOKEN", "")  # Pegamos do ambiente (seguro no Actions
 
 # Caminho do banco no repositório
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "historico.db")
+DB_PATH = os.path.join(BASE_DIR, "backend", "historico.db")
 
 
 def connect_db():
