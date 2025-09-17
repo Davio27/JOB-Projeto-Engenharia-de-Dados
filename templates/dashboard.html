@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Cotações</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="dashboard show" id="dashboard">
+        <div class="container">
+            <div class="header">
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <span>🚪</span>
+                    <span>Sair</span>
+                </a>
+                <button class="theme-toggle" onclick="alternarTema()">
+                    <span class="theme-icon">🌙</span>
+                    <span class="theme-text">Escuro</span>
+                </button>
+                <h1>Dashboard de Cotações</h1>
+                <p>Acompanhe as cotações do Dólar e Euro em tempo real</p>
+            </div>
+
+            <div class="realtime-container">
+                <div class="realtime-header">
+                    <div class="realtime-title">
+                        <h2>📈 Cotações em Tempo Real</h2>
+                        <p>Atualizações a cada 5 minutos</p>
+                    </div>
+                    <div class="realtime-status">
+                        <div class="status-indicator"></div>
+                        <span>Ao Vivo</span>
+                    </div>
+                </div>
+                <div class="realtime-chart-wrapper">
+                    <canvas id="realtimeChart"></canvas>
+                </div>
+            </div>
+
+            <div class="cards-container">
+                <div class="card usd">
+                    <div class="card-header">
+                        <div class="currency-icon usd-icon">$</div>
+                        <div>
+                            <div class="currency-name">Dólar Americano</div>
+                            <div class="currency-pair">USD/BRL</div>
+                        </div>
+                    </div>
+                    <div class="cotacao-valor" id="usd-valor">R$ {{ usd_value }}</div>
+                    <div class="variacao" id="usd-variacao"></div>
+                </div>
+
+                <div class="card euro">
+                    <div class="card-header">
+                        <div class="currency-icon eur-icon">€</div>
+                        <div>
+                            <div class="currency-name">Euro</div>
+                            <div class="currency-pair">EUR/BRL</div>
+                        </div>
+                    </div>
+                    <div class="cotacao-valor" id="eur-valor">R$ {{ eur_value }}</div>
+                    <div class="variacao" id="eur-variacao"></div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Histórico USD/BRL - 30 Dias</h2>
+                        <p>Evolução do Dólar no último mês</p>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="usdChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Comparativo USD vs EUR - 30 Dias</h2>
+                        <p>Dólar e Euro lado a lado</p>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="comparativoChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Variação % USD - 15 Dias</h2>
+                        <p>Percentual de mudança diária do Dólar</p>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="variacaoChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Resumo Geral - 10 Dias</h2>
+                        <p>Visão geral das principais moedas</p>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="resumoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ultima-atualizacao">
+                Última atualização: <span id="ultima-atualizacao">{{ last_update }}</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

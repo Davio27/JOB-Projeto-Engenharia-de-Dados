@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Dashboard de Cotações</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="login-screen" id="loginScreen">
+        <button class="theme-toggle-login" onclick="alternarTema()">
+            <span class="theme-icon-login">🌙</span>
+        </button>
+
+        <div class="login-container">
+            <div class="login-header">
+                <h1>💹 Dashboard</h1>
+                <p>Faça login para acessar as cotações</p>
+            </div>
+
+            {% if error %}
+            <p style="color: #e74c3c; text-align: center;">{{ error }}</p>
+            {% endif %}
+
+            <form class="login-form" method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" name="username" required placeholder="Digite seu usuário">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" required placeholder="Digite sua senha">
+                </div>
+
+                <button type="submit" class="login-btn">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
