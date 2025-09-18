@@ -1,33 +1,30 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import random
-from apscheduler.schedulers.background import BackgroundScheduler
-from backend.main import update_current_rates
-from datetime import datetime
+from backend.main import update_current_rates, pegar_realtime
 import sqlite3
 import os
+from datetime import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'  # Replace with a secure key in production
+app.secret_key = 'your-secret-key'
 
-# Definir o caminho para o banco de dados
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'backend', 'historico.db')
 
-# Mock user for demonstration (replace with proper database in production)
-users = {
-    'admin': 'password123'
-}
+users = {'admin': 'password123'}
 
 def connect_db():
-    """Connect to the SQLite database."""
-    conn = sqlite3.connect(DB_PATH)
-    return conn
+    return sqlite3.connect(DB_PATH)
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_current_rates, 'interval', minutes=25)
     scheduler.start()
-    
+def parse_date(s):
+    try:
+        return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return datetime.strptime(s, "%Y-%m-%d")
 @app.route('/')
 def index():
     if 'username' in session:
@@ -38,126 +35,164 @@ def index():
 def login():
     username = request.form.get('username')
     password = request.form.get('password')
-
     if username in users and users[username] == password:
         session['username'] = username
         return redirect(url_for('dashboard'))
-    else:
-        return render_template('login.html', error='Invalid username or password')
+    return render_template('login.html', error='Usuário ou senha inválidos')
 
 @app.route('/dashboard')
 def dashboard():
     if 'username' not in session:
         return redirect(url_for('index'))
-    
     conn = connect_db()
     cursor = conn.cursor()
-    
-    # Get latest USD value and last update
-    cursor.execute("""
-        SELECT bid, create_date FROM quotes 
-        WHERE code = 'USD' ORDER BY timestamp DESC LIMIT 1
-    """)
+    cursor.execute("SELECT bid, create_date FROM quotes WHERE code='USD' ORDER BY timestamp DESC LIMIT 1")
     usd_row = cursor.fetchone()
     usd_value = round(float(usd_row[0]), 3) if usd_row else 5.25
     usd_update = usd_row[1] if usd_row else datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    
-    # Get latest EUR value
-    cursor.execute("""
-        SELECT bid FROM quotes 
-        WHERE code = 'EUR' ORDER BY timestamp DESC LIMIT 1
-    """)
+    cursor.execute("SELECT bid FROM quotes WHERE code='EUR' ORDER BY timestamp DESC LIMIT 1")
     eur_row = cursor.fetchone()
     eur_value = round(float(eur_row[0]), 3) if eur_row else 5.68
-    
     conn.close()
-    
-    # Simulate slight variation for demo (optional, remove in production)
-    usd_value += (random.random() - 0.5) * 0.001
-    eur_value += (random.random() - 0.5) * 0.001
-    
-    return render_template('dashboard.html', 
-                        usd_value=usd_value,
-                        eur_value=eur_value,
-                        last_update=usd_update)
+    return render_template('dashboard.html', usd_value=usd_value, eur_value=eur_value, last_update=usd_update)
 
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
-@app.route('/api/currency-data')
-def get_currency_data():
+
+@app.route('/api/realtime-data')
+def get_realtime_data():
     conn = connect_db()
     cursor = conn.cursor()
-    
-    # 30 days USD
-    cursor.execute("""
-        SELECT strftime('%d/%m', create_date) as label, bid, pctChange 
-        FROM quotes WHERE code = 'USD' ORDER BY timestamp DESC LIMIT 30
-    """)
-    usd30_rows = cursor.fetchall()
-    labels30 = [row[0] for row in reversed(usd30_rows)]
-    usd30 = [round(float(row[1]), 3) for row in reversed(usd30_rows)]
-    
-    # 30 days EUR
-    cursor.execute("""
-        SELECT bid FROM quotes WHERE code = 'EUR' ORDER BY timestamp DESC LIMIT 30
-    """)
-    eur30_rows = cursor.fetchall()
-    eur30 = [round(float(row[0]), 3) for row in reversed(eur30_rows)]
-    
-    # 15 days variation (pctChange for USD)
-    cursor.execute("""
-        SELECT strftime('%d/%m', create_date) as label, pctChange 
-        FROM quotes WHERE code = 'USD' ORDER BY timestamp DESC LIMIT 15
-    """)
-    var15_rows = cursor.fetchall()
-    labels15 = [row[0] for row in reversed(var15_rows)]
-    variation15 = [round(float(row[1]), 2) for row in reversed(var15_rows)]
-    
-    # 10 days USD
-    cursor.execute("""
-        SELECT bid FROM quotes WHERE code = 'USD' ORDER BY timestamp DESC LIMIT 10
-    """)
-    usd10_rows = cursor.fetchall()
-    usd10 = [round(float(row[0]), 3) for row in reversed(usd10_rows)]
-    
-    # 30 dias GBP
-    cursor.execute("SELECT bid FROM quotes WHERE code = 'GBP' ORDER BY timestamp DESC LIMIT 30")
-    gbp30_rows = cursor.fetchall()
-    gbp30 = [round(float(row[0]),3) for row in reversed(gbp30_rows)]
 
-    # 10 dias GBP
-    cursor.execute("SELECT bid FROM quotes WHERE code = 'GBP' ORDER BY timestamp DESC LIMIT 10")
-    gbp10_rows = cursor.fetchall()
-    gbp10 = [round(float(row[0]),3) for row in reversed(gbp10_rows)]
-    
-    # 10 days EUR
+    # Função auxiliar para tratar datas com ou sem hora
+    def parse_date(s):
+        from datetime import datetime
+        try:
+            return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return datetime.strptime(s, "%Y-%m-%d")
+
+    # Pega últimos 60 registros USD
     cursor.execute("""
-        SELECT bid FROM quotes WHERE code = 'EUR' ORDER BY timestamp DESC LIMIT 10
+        SELECT create_date, bid
+        FROM quotes
+        WHERE code='USD'
+        ORDER BY timestamp DESC
+        LIMIT 60
     """)
-    eur10_rows = cursor.fetchall()
-    eur10 = [round(float(row[0]), 3) for row in reversed(eur10_rows)]
-    
-    # BRL as base (static 1.0)
-    brl10 = [1.00 for _ in range(10)]
-    labels10 = [f"{i+1:02d}/09" for i in range(10)]  # Simplified, adjust based on actual dates if needed
-    
+    usd_rows = cursor.fetchall()
+    labels_usd = [parse_date(r[0]).strftime('%H:%M') for r in reversed(usd_rows)]
+    bids_usd = [round(float(r[1]), 3) for r in reversed(usd_rows)]
+
+    # Pega últimos 60 registros EUR
+    cursor.execute("""
+        SELECT create_date, bid
+        FROM quotes
+        WHERE code='EUR'
+        ORDER BY timestamp DESC
+        LIMIT 60
+    """)
+    eur_rows = cursor.fetchall()
+    labels_eur = [parse_date(r[0]).strftime('%H:%M') for r in reversed(eur_rows)]
+    bids_eur = [round(float(r[1]), 3) for r in reversed(eur_rows)]
+
     conn.close()
-    
+
+    # Retorna JSON para o frontend
     return jsonify({
-        'labels30': labels30,
-        'usd30': usd30,
-        'eur30': eur30,
-        'labels15': labels15,
-        'variation15': variation15,
-        'labels10': labels10,
-        'usd10': usd10,
-        'eur10': eur10,
-        'gbp30': gbp30,
-        'gbp10': gbp10,
-        'brl10': brl10
+        'labels': labels_usd,  # assumimos mesmos horários para USD e EUR
+        'usd': bids_usd,
+        'eur': bids_eur
+    })
+
+@app.route('/api/realtime-data')
+def realtime_data():
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Pega os últimos 60 registros de USD
+    cursor.execute("""
+        SELECT bid, create_date 
+        FROM quotes 
+        WHERE code='USD'
+        ORDER BY timestamp DESC
+        LIMIT 60
+    """)
+    usd_rows = cursor.fetchall()
+    labels_usd = [datetime.strptime(r[1], "%Y-%m-%d %H:%M:%S").strftime('%H:%M') for r in reversed(usd_rows)]
+    bids_usd = [float(r[0]) for r in reversed(usd_rows)]
+
+    # Pega os últimos 60 registros de EUR
+    cursor.execute("""
+        SELECT bid, create_date 
+        FROM quotes 
+        WHERE code='EUR'
+        ORDER BY timestamp DESC
+        LIMIT 60
+    """)
+    eur_rows = cursor.fetchall()
+    labels_eur = [datetime.strptime(r[1], "%Y-%m-%d %H:%M:%S").strftime('%H:%M') for r in reversed(eur_rows)]
+    bids_eur = [float(r[0]) for r in reversed(eur_rows)]
+
+    conn.close()
+
+    # Retorna JSON para o frontend
+    return jsonify({
+        'labels': labels_usd,  # assume mesmo horário para USD e EUR
+        'usd': bids_usd,
+        'eur': bids_eur
+    })
+@app.route('/api/currency-data')
+def currency_data():
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Pega os últimos 30 dias de cada moeda
+    cursor.execute("""
+        SELECT code, bid, create_date 
+        FROM quotes 
+        WHERE code IN ('USD','EUR','GBP')
+        AND DATE(create_date) >= DATE('now','-30 days')
+        ORDER BY create_date ASC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Organizar dados por moeda
+    usd = [float(r[1]) for r in rows if r[0]=='USD']
+    eur = [float(r[1]) for r in rows if r[0]=='EUR']
+    gbp = [float(r[1]) for r in rows if r[0]=='GBP']
+    labels30 = [datetime.strptime(r[2], "%Y-%m-%d %H:%M:%S").strftime("%d/%m") for r in rows if r[0]=='USD']  # usa USD como referência
+
+    # Variação % últimos 15 dias para USD
+    variation15 = []
+    for i in range(1, min(16, len(usd))):
+        delta = ((usd[-i] - usd[-i-1]) / usd[-i-1]) * 100
+        variation15.append(round(delta, 2))
+    variation15 = variation15[::-1]  # inverter para ficar cronológico
+
+    # Últimos 10 dias
+    labels10 = labels30[-10:]
+    usd10 = usd[-10:]
+    eur10 = eur[-10:]
+    gbp10 = gbp[-10:]
+    brl10 = [1]*len(usd10)
+
+    return jsonify({
+        "labels30": labels30,
+        "usd30": usd,
+        "eur30": eur,
+        "gbp30": gbp,
+        "labels15": labels30[-15:],
+        "variation15": variation15,
+        "labels10": labels10,
+        "usd10": usd10,
+        "eur10": eur10,
+        "gbp10": gbp10,
+        "brl10": brl10
     })
 
 if __name__ == '__main__':
