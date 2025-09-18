@@ -27,7 +27,7 @@ Pipeline de **engenharia de dados** para coleta, armazenamento e visualização 
 
 **Histórico USD/BRL e EUR/BRL**  
 
-![Histórico 30 dias](docs/Captura de tela 2025-09-17 221641.png)
+![Histórico 30 dias](docs/historico30.png)
 
 **Comparativo de moedas**  
 
