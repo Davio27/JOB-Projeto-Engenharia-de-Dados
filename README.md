@@ -27,19 +27,19 @@ Pipeline de **engenharia de dados** para coleta, armazenamento e visualização 
 
 **Histórico USD/BRL e EUR/BRL**  
 
-![Histórico 30 dias](docs/usd_eur_30dias.png)
+![Histórico 30 dias](docs/Captura de tela 2025-09-17 221641.png)
 
 **Comparativo de moedas**  
 
-![Comparativo](docs/comparativo.png)
+![Comparativo](docs/Captura de tela 2025-09-17 221656.png)
 
 **Resumo de 10 dias**  
 
-![Resumo 10 dias](docs/resumo.png)
+![Resumo 10 dias](docs/Captura de tela 2025-09-17 221715.png)
 
 **Variação percentual 15 dias**  
 
-![Variação 15 dias](docs/variacao.png)
+![Variação 15 dias](docs/Captura de tela 2025-09-17 221706.png)
 
 > Obs: você pode gerar GIFs mostrando os gráficos em tempo real para colocar aqui também.
 
