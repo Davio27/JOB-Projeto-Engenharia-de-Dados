@@ -1,210 +1,176 @@
-# Projeto de Engenharia de Dados: Monitoramento de Câmbio (USD, EUR, GBP, JPY, AUD)
+# 💱 Projeto de Monitoramento de Câmbio (USD, EUR, GBP, JPY, AUD)
 
-Este projeto é um pipeline de engenharia de dados completo para captura, armazenamento e visualização de taxas de câmbio de moedas em relação ao Real Brasileiro (BRL). Ele combina coleta de dados via API, armazenamento em banco SQLite, atualização automática com GitHub Actions e visualização em tempo real em um dashboard web construído com Flask e Chart.js.
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![Flask](https://img.shields.io/badge/flask-2.3-green)
+![SQLite](https://img.shields.io/badge/sqlite-3.41-orange)
+![GitHub Actions](https://img.shields.io/badge/github--actions-automated-purple)
 
----
-
-## 🚀 Objetivos do Projeto
-
-- Capturar dados históricos e em tempo real de moedas: USD, EUR, GBP, JPY e AUD.
-- Armazenar as informações em um banco de dados **SQLite (`historico.db`)**.
-- Atualizar continuamente os dados utilizando **GitHub Actions**.
-- Disponibilizar visualizações interativas e modernas em um **dashboard web** com Flask + Chart.js.
-- Permitir monitoramento de variações percentuais, tendências de curto e médio prazo e comparativos entre moedas.
+Pipeline de **engenharia de dados** para coleta, armazenamento e visualização de taxas de câmbio em relação ao Real Brasileiro (BRL), com dashboard web em tempo real.
 
 ---
 
-## 🛠 Estrutura do Pipeline
+## 🔹 Funcionalidades
 
-1. **Coleta de Dados (ETL)**
-   - O script `populate.py` busca:
-     - **Histórico dos últimos 10 dias** de cada moeda.
-     - **Cotação atual** em tempo real.
-   - API utilizada: [AwesomeAPI](https://docs.awesomeapi.com.br/api-de-moedas)
-   - Cada registro inclui:
-     - Código da moeda (`USD`, `EUR`, etc.)
-     - Código de conversão (`BRL`)
-     - Nome da moeda
-     - Máxima e mínima do dia (`high` / `low`)
-     - Valor de abertura e fechamento (`bid` / `ask`)
-     - Variação percentual (`pctChange`)
-     - Variação de preço (`varBid`)
-     - Timestamp
-     - Data formatada (`create_date`)
-
-2. **Banco de Dados**
-   - SQLite (`historico.db`) localizado em `backend/`.
-   - Tabela `quotes` criada automaticamente com o seguinte schema:
-     ```sql
-     CREATE TABLE IF NOT EXISTS quotes (
-         id INTEGER PRIMARY KEY AUTOINCREMENT,
-         code TEXT,
-         codein TEXT,
-         name TEXT,
-         high REAL,
-         low REAL,
-         varBid REAL,
-         pctChange REAL,
-         bid REAL,
-         ask REAL,
-         timestamp INTEGER UNIQUE,
-         create_date TEXT
-     )
-     ```
-   - O script garante **inserção incremental**, evitando duplicação e atualizando os dados existentes.
-
-3. **Atualização Automática**
-   - O job `update_current_rates()` atualiza as cotações atuais periodicamente.
-   - Pode ser agendado para execução contínua via **GitHub Actions**:
-     - Busca dados atuais.
-     - Atualiza a tabela `quotes` automaticamente.
-     - Mantém o histórico atualizado.
-
-4. **Dashboard Web**
-   - Desenvolvido com **Flask**.
-   - Frontend com **Chart.js** para visualização de:
-     - Histórico dos últimos 30 dias (USD, EUR, GBP)
-     - Comparativo USD x EUR
-     - Resumo de 10 dias
-     - Gráfico em tempo real (últimos 60 minutos)
-     - Variação percentual dos últimos 15 dias
-   - Recursos adicionais:
-     - Tema claro / escuro
-     - Cards de valor e variação em tempo real
+- Captura de **dados históricos (10 dias)** e **atualizações em tempo real** via [AwesomeAPI](https://docs.awesomeapi.com.br/api-de-moedas)
+- Armazenamento em **SQLite (`historico.db`)** com prevenção de duplicação
+- Dashboard interativo com **Chart.js**:
+  - Histórico de 30 dias
+  - Comparativo USD x EUR
+  - Resumo de 10 dias
+  - Gráfico em tempo real
+  - Variação percentual dos últimos 15 dias
+- **Tema claro / escuro** e cards de valor atual
 
 ---
 
-## 📁 Estrutura de Pastas
+## 📊 Visual do Dashboard
 
-````
+**Histórico USD/BRL e EUR/BRL**  
+
+![Histórico 30 dias](docs/usd_eur_30dias.png)
+
+**Comparativo de moedas**  
+
+![Comparativo](docs/comparativo.png)
+
+**Resumo de 10 dias**  
+
+![Resumo 10 dias](docs/resumo.png)
+
+**Variação percentual 15 dias**  
+
+![Variação 15 dias](docs/variacao.png)
+
+> Obs: você pode gerar GIFs mostrando os gráficos em tempo real para colocar aqui também.
+
+---
+
+## ⚙️ Tecnologias
+
+- Python 3.12
+- Flask
+- SQLite
+- Chart.js
+- Requests
+- GitHub Actions para automação
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
 
 projeto\_api/
-│
 ├── backend/
-│   ├── historico.db         # Banco de dados SQLite
-│   ├── main.py              # Funções de ETL e atualização de dados
-│   └── populate.py          # Script para popular histórico
-│
+│   ├── historico.db
+│   ├── main.py
+│   ├── count.py
+│   └── databases.py
 ├── templates/
 │   ├── login.html
 │   └── dashboard.html
-│
 ├── static/
-│   ├── script.js            # Script para gráficos e frontend
-│
-├── app.py                   # Aplicação Flask
+│   └── script.js
+│   └── styles.css
+├── app.py
 └── README.md
 
 ````
 
 ---
 
-## ⚙️ Instalação e Uso
+## 🚀 Instalação e Execução
 
-1. **Clonar o repositório**
 ```bash
 git clone <repo-url>
 cd projeto_api
+
+# Criar ambiente virtual
+python -m venv venv
+venv\Scripts\activate      # Windows
+source venv/bin/activate   # Linux/macOS
+
+pip install -r requirements.txt
+
+# Configurar token da API
+set API_TOKEN=SEU_TOKEN     # Windows
+export API_TOKEN=SEU_TOKEN  # Linux/macOS
+
+# Rodar dashboard
+python app.py
 ````
 
-2. **Criar ambiente virtual e instalar dependências**
-
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux / macOS
-venv\Scripts\activate     # Windows
-pip install -r requirements.txt
-```
-
-3. **Configurar token da API**
-
-```bash
-export API_TOKEN="SEU_TOKEN_AQUI"  # Linux / macOS
-set API_TOKEN=SEU_TOKEN_AQUI       # Windows
-```
-
-4. **Rodar aplicação**
-
-```bash
-python app.py
-```
-
-* Acesse o dashboard em `http://127.0.0.1:5000`.
-* Login: `admin` / `password123`.
+Acesse o dashboard em [http://127.0.0.1:5000](http://127.0.0.1:5000)
+Login: `admin` / `password123`
 
 ---
 
-## ⚡ GitHub Actions
+## ⚡ Automação com GitHub Actions
 
-Um workflow pode ser configurado para rodar o script automaticamente, garantindo que o `historico.db` esteja sempre atualizado:
+O workflow garante que o banco `historico.db` esteja sempre atualizado:
 
 ```yaml
-name: Atualizar Cotações
+name: Update Quotes DB
+
+permissions:
+  contents: write  # permite push no repositório
 
 on:
   schedule:
-    - cron: "0 * * * *"  # A cada hora
-  workflow_dispatch:
+    - cron: "*/1 * * * *"  # a cada 30 minutos
+  workflow_dispatch:        # também pode rodar manualmente
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Configurar Python
-        uses: actions/setup-python@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Instalar dependências
+          python-version: "3.12"
+
+      - name: Install dependencies
         run: pip install requests
-      - name: Executar atualização
-        run: python backend/populate.py
+
+      - name: Run update script
         env:
           API_TOKEN: ${{ secrets.API_TOKEN }}
-      - name: Commit database atualizado
+        run: python scheduler.py
+
+      - name: Commit and push updated DB
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backend/historico.db
-          git commit -m "Atualização automática do histórico"
-          git push
+          git commit -m "Update historico.db [skip ci]" || echo "No changes to commit"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
 ```
 
 ---
 
-## 💡 Observações
+## 📊 Pipeline de Dados
 
-* O banco **SQLite** foi escolhido por simplicidade e facilidade de versionamento junto ao Git.
-* O dashboard suporta **gráficos modernos e responsivos** via Chart.js.
-* Todos os dados são armazenados com timestamp, garantindo histórico consistente.
-* Atualizações contínuas via GitHub Actions permitem histórico sempre atualizado sem intervenção manual.
-
----
-
-## 🛠 Tecnologias Utilizadas
-
-* **Python 3.12**
-* **Flask** (Web Framework)
-* **SQLite** (Banco de Dados)
-* **Requests** (API)
-* **Chart.js** (Visualização)
-* **GitHub Actions** (Automação)
+1. **ETL (populate.py / main.py)**: coleta histórico e cotações em tempo real.
+2. **Banco SQLite**: armazena dados estruturados, previne duplicação e mantém timestamps.
+3. **Atualização automática**: via GitHub Actions ou agendamento local.
+4. **Dashboard web**: gráficos interativos, tema escuro/claro, cards de valor e variação.
 
 ---
 
-## 📈 Próximos Passos
+## 🌟 Próximos Passos
 
-* Adicionar alertas de variação significativa de moedas.
-* Implementar autenticação mais robusta no dashboard.
-* Migrar banco para PostgreSQL para suportar volumes maiores de dados.
-* Melhorar a estética dos gráficos com temas interativos.
+* Alertas de variação significativa de moedas
+* Migração para PostgreSQL para maior escalabilidade
+* Gráficos interativos avançados e análise preditiva
 
 ---
 
-✅ Projeto completo de **engenharia de dados** com coleta, transformação, armazenamento e visualização de cotações.
+✅ Projeto completo de **engenharia de dados**: coleta, transformação, armazenamento e visualização de cotações em tempo real.
 
 ```
 
-
-Quer que eu faça isso?
-```
