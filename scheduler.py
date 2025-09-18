@@ -34,17 +34,43 @@ def connect_db():
     return conn
 
 
-def fetch_historical_data(code, days=30):
+def fetch_historical_data(code, days=10):
     """Fetch historical data for the last N days."""
     url = f"https://economia.awesomeapi.com.br/json/daily/{code}/{days}?token={API_TOKEN}"
     response = requests.get(url, timeout=10)
-    return response.json() if response.status_code == 200 else []
+    if response.status_code != 200:
+        print(f"Erro ao buscar histórico da moeda {code}")
+        return []
+    return response.json()
 
 
 def insert_quote(cursor, quote):
-    """Insert a single quote if it doesn't exist."""
-    cursor.execute("SELECT 1 FROM quotes WHERE timestamp = ?", (int(quote["timestamp"]),))
-    if not cursor.fetchone():
+    """Insert a single quote if it doesn't exist, ou atualiza se já existir."""
+    cursor.execute("SELECT 1 FROM quotes WHERE timestamp = ? AND code = ?", (int(quote["timestamp"]), quote["code"]))
+    if cursor.fetchone():
+        # Atualiza valores existentes
+        cursor.execute("""
+            UPDATE quotes SET
+                high = ?,
+                low = ?,
+                varBid = ?,
+                pctChange = ?,
+                bid = ?,
+                ask = ?,
+                create_date = ?
+            WHERE timestamp = ? AND code = ?
+        """, (
+            float(quote["high"]),
+            float(quote["low"]),
+            float(quote["varBid"]),
+            float(quote["pctChange"]),
+            float(quote["bid"]),
+            float(quote["ask"]),
+            quote["create_date"],
+            int(quote["timestamp"]),
+            quote["code"]
+        ))
+    else:
         cursor.execute("""
             INSERT INTO quotes (code, codein, name, high, low, varBid, pctChange, bid, ask, timestamp, create_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -64,7 +90,7 @@ def insert_quote(cursor, quote):
 
 
 def populate_historical_data():
-    """Populate historical data for main currencies."""
+    """Populate historical data for main currencies (últimos 10 dias)."""
     codes = {
         "USD-BRL": ("USD", "BRL", "Dólar Americano/Real Brasileiro"),
         "EUR-BRL": ("EUR", "BRL", "Euro/Real Brasileiro"),
@@ -77,7 +103,7 @@ def populate_historical_data():
     cursor = conn.cursor()
 
     for code, (c, c_in, name) in codes.items():
-        hist_data = fetch_historical_data(code, days=30)
+        hist_data = fetch_historical_data(code, days=10)
         for quote in hist_data:
             quote["code"] = c
             quote["codein"] = c_in
@@ -85,6 +111,7 @@ def populate_historical_data():
             quote["create_date"] = datetime.fromtimestamp(
                 int(quote["timestamp"])
             ).strftime("%Y-%m-%d %H:%M:%S")
+            quote["varBid"] = float(quote["high"]) - float(quote["low"])
             insert_quote(cursor, quote)
 
     conn.commit()
@@ -92,7 +119,7 @@ def populate_historical_data():
 
 
 def fetch_current_rates():
-    """Fetch current rates."""
+    """Fetch current rates for all main currencies."""
     url = f"https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,GBP-BRL,JPY-BRL,AUD-BRL?token={API_TOKEN}"
     response = requests.get(url, timeout=10)
     return response.json() if response.status_code == 200 else {}
@@ -102,6 +129,7 @@ def update_current_rates():
     """Update database with latest quotes."""
     data = fetch_current_rates()
     if not data:
+        print("Nenhum dado atual retornado")
         return
 
     conn = connect_db()
@@ -112,6 +140,7 @@ def update_current_rates():
             quote["create_date"] = datetime.fromtimestamp(
                 int(quote["timestamp"])
             ).strftime("%Y-%m-%d %H:%M:%S")
+            quote["varBid"] = float(quote["high"]) - float(quote["low"])
             insert_quote(cursor, quote)
 
     conn.commit()
