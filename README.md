@@ -39,7 +39,7 @@ Pipeline de **engenharia de dados** para coleta, armazenamento e visualização 
 
 **Variação percentual 15 dias**  
 
-![Variação 15 dias](variacao.png)
+![Variação 15 dias](docs/variacao.png)
 
 > Obs: você pode gerar GIFs mostrando os gráficos em tempo real para colocar aqui também.
 
