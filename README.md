@@ -31,15 +31,15 @@ Pipeline de **engenharia de dados** para coleta, armazenamento e visualização 
 
 **Comparativo de moedas**  
 
-![Comparativo](docs/Captura de tela 2025-09-17 221656.png)
+![Comparativo](docs/comparativo30.png)
 
 **Resumo de 10 dias**  
 
-![Resumo 10 dias](docs/Captura de tela 2025-09-17 221715.png)
+![Resumo 10 dias](docs/resumo.png)
 
 **Variação percentual 15 dias**  
 
-![Variação 15 dias](docs/Captura de tela 2025-09-17 221706.png)
+![Variação 15 dias](variacao.png)
 
 > Obs: você pode gerar GIFs mostrando os gráficos em tempo real para colocar aqui também.
 
