@@ -122,7 +122,7 @@ def realtime_data():
         LIMIT 60
     """)
     usd_rows = cursor.fetchall()
-    labels_usd = [datetime.strptime(r[1], "%Y-%m-%d %H:%M:%S").strftime('%H:%M') for r in reversed(usd_rows)]
+    labels_usd = [datetime.strptime(r[1], "%Y-%m-%d").strftime('%H:%M') for r in reversed(usd_rows)]
     bids_usd = [float(r[0]) for r in reversed(usd_rows)]
 
     # Pega os últimos 60 registros de EUR
@@ -134,7 +134,7 @@ def realtime_data():
         LIMIT 60
     """)
     eur_rows = cursor.fetchall()
-    labels_eur = [datetime.strptime(r[1], "%Y-%m-%d %H:%M:%S").strftime('%H:%M') for r in reversed(eur_rows)]
+    labels_eur = [datetime.strptime(r[1], "%Y-%m-%d").strftime('%H:%M') for r in reversed(eur_rows)]
     bids_eur = [float(r[0]) for r in reversed(eur_rows)]
 
     conn.close()
