@@ -146,7 +146,7 @@ function renderizarGraficos(data) {
 
 // Tempo real
 function inicializarGraficoTempoReal() {
-    fetch('/api/realtime-data')
+    fetch('/api/realtime-data-short')
         .then(res => res.json())
         .then(data => {
             realtimeData.labels = data.labels;

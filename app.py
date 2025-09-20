@@ -62,7 +62,7 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route('/api/realtime-data')
+@app.route('/api/realtime-data-short')
 def get_realtime_data():
     conn = connect_db()
     cursor = conn.cursor()
@@ -165,8 +165,7 @@ def currency_data():
     usd = [float(r[1]) for r in rows if r[0]=='USD']
     eur = [float(r[1]) for r in rows if r[0]=='EUR']
     gbp = [float(r[1]) for r in rows if r[0]=='GBP']
-    labels30 = [datetime.strptime(r[2], "%Y-%m-%d %H:%M:%S").strftime("%d/%m") for r in rows if r[0]=='USD']  # usa USD como referência
-
+    labels30 = [parse_date(r[2]).strftime("%d/%m") for r in rows if r[0]=='USD']
     # Variação % últimos 15 dias para USD
     variation15 = []
     for i in range(1, min(16, len(usd))):
